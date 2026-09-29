@@ -1,12 +1,13 @@
 import joblib
+import logging
 from pathlib import Path
 
-print("classifier.py is loaded")
+logger = logging.getLogger(__name__)
 
 
 class CSClassifier:
     def __init__(self):
-        print("CSClassifier initialized (models loading...)")
+        logger.info("Loading trained models...")
         base_path = Path(__file__).resolve().parent
 
         # Load discipline model & vectorizer
@@ -60,7 +61,7 @@ class CSClassifier:
         }
 
     def predict_discipline(self, text: str) -> dict:
-        print("Running discipline prediction")
+        logger.debug("Running discipline prediction")
         X = self.discipline_vectorizer.transform([text])
         probs = self.discipline_model.predict_proba(X)[0]
         classes = self.discipline_model.classes_
@@ -80,7 +81,7 @@ class CSClassifier:
         }
 
     def predict_field(self, text: str) ->dict:
-        print("Running field prediction")
+        logger.debug("Running field prediction")
         X = self.field_vectorizer.transform([text])
         probs = self.field_model.predict_proba(X)[0]
         classes = self.field_model.classes_

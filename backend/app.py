@@ -26,8 +26,7 @@ UPLOAD_DIR.mkdir(exist_ok=True) #Create if doesn't exist
 
 #Load the model at startup
 classifier = CSClassifier()
-print("app.py loaded")
-print("classifier instance created")
+logger.info("Classifier ready")
 
 #---------- ROUTING ----------#
 #Accept one or multipole PDFs, delete previously uplodaded PDFs and save new ones to disk
@@ -55,7 +54,7 @@ def documents():
 #Extracts text, abstract, discipline prediction, & field prediction
 @app.get("/document/{filename}")
 def document(filename: str):
-    print(f"Processing file: {filename}")
+    logger.info(f"Processing file: {filename}")
     path = UPLOAD_DIR / filename
     if not path.exists():
         return {"error": "not found"}
@@ -65,13 +64,12 @@ def document(filename: str):
     abstract = extract_abstract(full_text[:6000]) #Extract abstract
 
     text_for_prediction = abstract or full_text[:2000] #Choose prediction: abstract or the fallback
-    print("Text used for prediction:", text_for_prediction[:200])
+    logger.debug("Text used for prediction: %s", text_for_prediction[:200])
 
     discipline_prediction = classifier.predict_discipline(text_for_prediction) #Predict the compSci discipline
     field_prediction = classifier.predict_field(text_for_prediction) #Predict the compSci field
     discipline_prediction = classifier.rerank_discipline_with_taxonomy(discipline_prediction, field_prediction)
-    print("Discipline:", discipline_prediction)
-    print("Field:", field_prediction)
+    logger.info("Discipline: %s | Field: %s", discipline_prediction["prediction"], field_prediction["prediction"])
 
     #Return results asn JSON
     return {
