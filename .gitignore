@@ -1,3 +1,8 @@
 backend/data/*.csv
 backend/data/selected_categories.csv
 backend/data/selected_categories.csv
+__pycache__/
+*.pyc
+backend/uploads/*
+!backend/uploads/.gitkeep
+.DS_Store
