@@ -1,63 +1,90 @@
-# CM3070 Computer Science Final Project
+# CS Paper Classifier — NLP discipline & field classification
 
-## Project Overview 
-This project is a web application that applies natural language processing (NLP)
-techniques to academic research papers in PDF format.
+A web application that classifies computer science research papers by **discipline** and **field** from a PDF upload. Built end-to-end: data collection from the arXiv API, an iterative modeling pipeline (TF-IDF + Logistic Regression, tuned with Optuna, benchmarked against SciBERT), and a FastAPI + React app serving the final model.
 
-The system allows users to upload PDF documents, automatically extract the abstract section,
-and predict the computer science discipline and field of the paper.
+> Developed as my BSc Computer Science final project (University of London).
 
-In addition to the application code, the project includes Jupyter notebooks covering the full machine learning pipeline, along with CSV datasets for training and preprocessing, and result CSV files for evaluation and analysis.
+![App screenshot](docs/screenshot.png)
 
+## Highlights
 
-## Technologies Used
+- **78,000+ labeled abstracts** collected from the arXiv API (2021–2025), mapped to a two-level taxonomy (discipline → field) informed by the Computer Science Ontology (CSO)
+- **Iterative development across 7 stages**: baseline → representations → classifier comparison → class balancing → data expansion → title augmentation → Optuna tuning, with a SciBERT benchmark at the end
+- **Macro F1 improved from 0.55 → 0.63** (discipline) and **0.50 → 0.54** (field) for the deployed classical model — the largest single gain came from expanding and balancing the data (15.7k → 78k samples), not from model complexity
+- **SciBERT scored only ~0.03 higher** (0.656 / 0.572), so the deployed model is the **tuned TF-IDF + Logistic Regression** — near-equal accuracy at a fraction of the inference cost
+- **Taxonomy-based re-ranking**: when the predicted field's parent discipline disagrees with the predicted discipline and the scores are close, the prediction is re-ranked for logical consistency
+- Rule-based **abstract extraction** from PDFs that handles varied paper layouts
 
-### Backend
-- Python
-- FastAPI 
-- PyPDF (for PDF text extraction) 
-- Pickle (.pkl models for saving/loading trained models)
+## Results (Macro F1, held-out test set)
 
-### Frontend
-- React (Vite) 
-- JavaScript
-- HTML / CSS 
+| Task | Baseline | Tuned (Optuna) | SciBERT |
+|---|---|---|---|
+| Discipline | 0.552 | 0.630 | 0.656 |
+| Field | 0.502 | 0.541 | 0.572 |
 
-### Tools
-- Git and GitHub for version control 
+Full per-stage metrics are in [`backend/data/results/`](backend/data/results) and aggregated with plots in [`15_evaluation.ipynb`](15_evaluation.ipynb).
 
+## Architecture
 
-## How the System Works
+```
+PDF upload → FastAPI backend → text extraction (PyPDF) → abstract detection (rule-based)
+          → TF-IDF vectorization → LogReg classifiers (discipline + field)
+          → taxonomy consistency re-ranking → React frontend (top-3 predictions + probabilities)
+```
 
-1. The user uploads one or more PDF files through the web interface
-2. The backend extracts raw text from each PDF file
-3. A rule-based method is used to locate and extract the abstract section
-4. The extracted text is converted into numerical features using TF-IDF
-5. A trained model (loaded from a .pkl file) classifies the text into a discipline and field
-6. The system assesses whether the predicted discipline matches the discipline expected from the predicted field using a taxonomy-based consistency check, and may rerank the discipline prediction if the scores are close
-7. The results are returned to the frontend and displayed to the user
+## Notebook pipeline
 
+| # | Notebook | Purpose |
+|---|---|---|
+| 01 | category_volume | Assess arXiv category volumes, select classes |
+| 02 | scraper | Collect abstracts via the arXiv API; CSO-informed taxonomy |
+| 03 | cleaning_eda | Cleaning, EDA, vocabulary analysis |
+| 04 | baseline | TF-IDF + Logistic Regression baseline |
+| 05 | representations | TF-IDF variants vs. Word2Vec |
+| 06 | classifiers | LogReg vs. Linear SVM vs. Complement NB vs. Random Forest |
+| 07 | capped_disciplines | Class-imbalance mitigation |
+| 08–09 | data expansion | Expand dataset to 78k samples (2021–2025); retrain |
+| 10–12 | titles | Title augmentation and weighting experiments |
+| 13 | optuna_tuning | Hyperparameter optimization → final model |
+| 14 | scibert | Transformer benchmark |
+| 15 | evaluation | Cross-stage comparison, plots and final analysis |
 
+Training datasets are not stored in the repo (size); notebooks 02–03 regenerate them from the arXiv API. The trained models (`.pkl`) **are** included, so the app runs without any training.
 
-## How to Run the Project
+## Running locally
 
-This project has a backend (FastAPI) and a frontend (React). Both must be running.
+**Backend**
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn app:app --reload        # http://127.0.0.1:8000
+```
 
-### Backend:
-Open a terminal and go to the backend folder: `cd backend`
+**Frontend**
+```bash
+cd frontend
+npm install
+npm run dev                     # http://localhost:5173
+```
 
-Install the required Python packages: `pip install fastapi uvicorn pypdf scikit-learn`
+## Repository structure
 
-Start the backend server: `uvicorn app:app --reload`
+```
+01–15_*.ipynb       # Modeling pipeline, numbered in order
+backend/            # FastAPI app: extraction/, model/ (classifier + .pkl), data/results/
+frontend/           # React (Vite) UI
+docs/               # Screenshots
+```
 
-The backend runs at http://127.0.0.1:8000
+## Tech stack
 
-### Frontend:
+Python · scikit-learn · Optuna · SciBERT (transformers) · pandas · FastAPI · PyPDF · React (Vite) · JavaScript
 
-Open a second terminal and go to the frontend folder: `cd frontend`
+## Limitations & future work
 
-Install dependencies: `npm install`
+- Residual class imbalance affects smaller disciplines; TF-IDF limits deeper semantic capture
+- Planned: hierarchical field–discipline classification, SHAP-based explainability, corpus-level analysis with persistent storage
 
-Start the frontend: `npm run dev`
+## License
 
-Open the frontend in your browser at http://localhost:5173
+MIT

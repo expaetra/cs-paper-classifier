@@ -5,6 +5,7 @@ export default function DocumentViewer({
   abstract,
   fallbackText,
   prediction,
+  fieldPrediction,
 }) {
   if (!activeDoc) { 
     return <h3 className="viewer-title" >Select a document</h3>; //Placeholder message before selecting a document
@@ -27,6 +28,28 @@ export default function DocumentViewer({
           <ul>
             {Object.entries(prediction.probabilities).map( 
               ([label, prob]) =>(
+                <li key={label}>
+                  {label}: {(prob * 100).toFixed(1)}%
+                </li>
+              )
+            )}
+          </ul>
+        </div>
+      )}
+
+      {/*Display the predicted field*/}
+      {fieldPrediction && (
+        <div className="prediction">
+          <strong>Computer science field prediction:</strong>
+          {/*Predicted label*/}
+          <p className="prediction-main">
+            {fieldPrediction.prediction}
+          </p>
+
+          {/*Display list of probability scores*/}
+          <ul>
+            {Object.entries(fieldPrediction.probabilities).map(
+              ([label, prob]) => (
                 <li key={label}>
                   {label}: {(prob * 100).toFixed(1)}%
                 </li>

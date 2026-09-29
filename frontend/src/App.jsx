@@ -23,6 +23,7 @@ export default function App() {
   const [abstract, setAbstract] = useState(""); //Extracted abstract
   const [fallbackText, setFallbackText] = useState("");//Fa;;back text if abstract not availabe
   const [prediction, setPrediction] = useState(null); //Discipline prediction
+  const [fieldPrediction, setFieldPrediction] = useState(null); //Field prediction
 
   //Load the document list when the application starts
   useEffect(() => {
@@ -47,6 +48,7 @@ export default function App() {
     setAbstract("Loading abstract... ");
     setFallbackText("");
     setPrediction(null);
+    setFieldPrediction(null);
 
     const data = await fetchDocument(name);
 
@@ -54,6 +56,7 @@ export default function App() {
     setAbstract(data.abstract || "Abstract not found.");
     setFallbackText(data.fallback_text || "");
     setPrediction(data.cs_discipline_prediction || null);
+    setFieldPrediction(data.cs_field_prediction || null);
   }
 
   return (
@@ -78,6 +81,7 @@ export default function App() {
           abstract={abstract} 
           fallbackText={fallbackText}
           prediction={prediction}
+          fieldPrediction={fieldPrediction}
         /> 
       </div>
     </div>
